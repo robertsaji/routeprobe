@@ -1,0 +1,21 @@
+base_url: https://httpbin.org
+routes:
+  - method: GET
+    path: /status/200
+    expected_status: 200
+    description: Should return 200 OK
+
+  - method: GET
+    path: /status/404
+    expected_status: 200
+    description: Intentional mismatch — expects 200 but gets 404
+
+  - method: POST
+    path: /post
+    expected_status: 200
+    description: POST to echo endpoint
+
+  - method: GET
+    path: /status/500
+    expected_status: 500
+    description: Expects a 500 response
