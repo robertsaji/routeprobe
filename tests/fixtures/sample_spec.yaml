@@ -1,0 +1,26 @@
+base_url: https://api.example.com
+
+routes:
+  - method: GET
+    path: /health
+    expect:
+      status: 200
+
+  - method: GET
+    path: /users
+    expect:
+      status: 200
+      body:
+        type: array
+
+  - method: POST
+    path: /users
+    body:
+      name: Alice
+      email: alice@example.com
+    expect:
+      status: 201
+      body:
+        id:
+          type: integer
+        name: Alice
