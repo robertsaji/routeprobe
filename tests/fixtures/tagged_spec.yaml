@@ -1,0 +1,32 @@
+base_url: "https://api.example.com"
+routes:
+  - name: list_users
+    method: GET
+    path: /users
+    expected_status: 200
+    tags:
+      - users
+      - read
+
+  - name: create_user
+    method: POST
+    path: /users
+    expected_status: 201
+    tags:
+      - users
+      - write
+
+  - name: health_check
+    method: GET
+    path: /health
+    expected_status: 200
+    tags:
+      - ops
+
+  - name: delete_user
+    method: DELETE
+    path: /users/1
+    expected_status: 204
+    tags:
+      - users
+      - write

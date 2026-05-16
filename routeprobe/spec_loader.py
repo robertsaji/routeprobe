@@ -1,72 +1,82 @@
-"""Loads and validates a YAML API spec for routeprobe."""
+"""Load and validate a routeprobe YAML spec file."""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any, Dict, List
 
 import yaml
-from pathlib import Path
-from typing import Any
-
-
-REQUIRED_ROUTE_FIELDS = {"method", "path", "expect"}
-REQUIRED_EXPECT_FIELDS = {"status"}
 
 
 class SpecLoadError(Exception):
-    """Raised when the YAML spec is missing or malformed."""
+    """Raised when the spec file cannot be loaded or is structurally invalid."""
 
 
-def load_spec(spec_path: str | Path) -> dict[str, Any]:
-    """Load and parse a YAML spec file.
+# Required top-level keys
+_TOP_LEVEL_REQUIRED = {"base_url", "routes"}
+
+# Required keys for every route entry
+_ROUTE_REQUIRED = {"method", "path", "expected_status"}
+
+
+def load_spec(path: str | Path) -> Dict[str, Any]:
+    """Load a YAML spec file and return its contents as a dict.
 
     Args:
-        spec_path: Path to the YAML spec file.
+        path: Path to the ``.yaml`` spec file.
 
     Returns:
-        Parsed spec as a dictionary.
+        Parsed spec dictionary with keys ``base_url`` and ``routes``.
 
     Raises:
-        SpecLoadError: If the file is missing, unreadable, or structurally invalid.
+        SpecLoadError: If the file is missing, not valid YAML, or fails
+                       structural validation.
     """
-    path = Path(spec_path)
-    if not path.exists():
-        raise SpecLoadError(f"Spec file not found: {path}")
+    fpath = Path(path)
 
     try:
-        with path.open("r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)
+        raw = fpath.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        raise SpecLoadError(f"Spec file not found: {fpath}")
+
+    try:
+        data = yaml.safe_load(raw)
     except yaml.YAMLError as exc:
-        raise SpecLoadError(f"Failed to parse YAML: {exc}") from exc
+        raise SpecLoadError(f"Invalid YAML in spec file: {exc}") from exc
 
     if not isinstance(data, dict):
-        raise SpecLoadError("Spec root must be a YAML mapping.")
+        raise SpecLoadError("Spec file must be a YAML mapping at the top level.")
 
-    if "base_url" not in data:
-        raise SpecLoadError("Spec must define 'base_url'.")
+    missing_top = _TOP_LEVEL_REQUIRED - data.keys()
+    if missing_top:
+        raise SpecLoadError(
+            f"Spec is missing required top-level keys: {sorted(missing_top)}"
+        )
 
-    routes = data.get("routes", [])
-    if not isinstance(routes, list):
+    if not isinstance(data["routes"], list):
         raise SpecLoadError("'routes' must be a list.")
 
-    for i, route in enumerate(routes):
-        _validate_route(route, index=i)
+    for idx, route in enumerate(data["routes"]):
+        _validate_route(route, idx)
 
     return data
 
 
-def _validate_route(route: Any, index: int) -> None:
-    if not isinstance(route, dict):
-        raise SpecLoadError(f"Route at index {index} must be a mapping.")
+def _validate_route(route: Any, idx: int) -> None:
+    """Validate a single route entry.
 
-    missing = REQUIRED_ROUTE_FIELDS - route.keys()
+    Args:
+        route: The route value from the YAML list.
+        idx:   Zero-based index used in error messages.
+
+    Raises:
+        SpecLoadError: If the route is not a dict or is missing required keys.
+    """
+    if not isinstance(route, dict):
+        raise SpecLoadError(f"Route at index {idx} must be a mapping, got {type(route).__name__}.")
+
+    missing = _ROUTE_REQUIRED - route.keys()
     if missing:
         raise SpecLoadError(
-            f"Route at index {index} is missing required fields: {missing}"
-        )
-
-    expect = route["expect"]
-    if not isinstance(expect, dict):
-        raise SpecLoadError(f"Route at index {index}: 'expect' must be a mapping.")
-
-    missing_expect = REQUIRED_EXPECT_FIELDS - expect.keys()
-    if missing_expect:
-        raise SpecLoadError(
-            f"Route at index {index}: 'expect' is missing fields: {missing_expect}"
+            f"Route at index {idx} is missing required keys: {sorted(missing)}"
         )
