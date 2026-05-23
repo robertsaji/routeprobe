@@ -1,0 +1,31 @@
+base_url: https://httpbin.org
+retry:
+  max_attempts: 3
+  backoff_factor: 0.25
+  retry_on_status:
+    - 429
+    - 500
+    - 503
+
+routes:
+  - id: get-anything
+    method: GET
+    path: /anything
+    expect:
+      status: 200
+
+  - id: get-delay
+    method: GET
+    path: /delay/1
+    expect:
+      status: 200
+    tags:
+      - slow
+
+  - id: post-anything
+    method: POST
+    path: /anything
+    expect:
+      status: 200
+    tags:
+      - write
