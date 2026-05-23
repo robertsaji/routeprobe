@@ -1,0 +1,20 @@
+base_url: "http://api.example.com"
+routes:
+  - id: list-items
+    method: GET
+    path: /items
+    expected_status: 200
+    tags:
+      - read
+  - id: create-item
+    method: POST
+    path: /items
+    expected_status: 201
+    tags:
+      - write
+  - id: delete-item
+    method: DELETE
+    path: /items/1
+    expected_status: 204
+    tags:
+      - write
