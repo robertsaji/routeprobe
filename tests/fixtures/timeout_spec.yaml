@@ -1,0 +1,28 @@
+base_url: https://api.example.com
+routes:
+  - id: get-users-default-timeout
+    method: GET
+    path: /users
+    expected_status: 200
+
+  - id: get-user-scalar-timeout
+    method: GET
+    path: /users/1
+    expected_status: 200
+    timeout: 15
+
+  - id: post-user-dict-timeout
+    method: POST
+    path: /users
+    expected_status: 201
+    timeout:
+      connect: 3
+      read: 20
+
+  - id: health-fast-timeout
+    method: GET
+    path: /health
+    expected_status: 200
+    timeout:
+      connect: 1
+      read: 2
